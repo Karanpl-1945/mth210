@@ -1,0 +1,67 @@
+---
+title: "Lab 10 Solution"
+author: Karan Pratap Lohiya
+format: pdf
+editor: visual
+---
+
+```{r}
+#| echo: FALSE
+
+library(knitr)
+
+# Create the data frame
+regression_data <- data.frame(
+  y  = c(1.1, 2, 2.5, 3),
+  x1 = c(11, 12, 10, 14),
+  x2 = c(21, 24, 26, 30)
+)
+
+# Print the table
+kable(regression_data, caption = "Regression Data", align = "c")
+
+```
+
+## Problem 1
+
+To find the least square estimates (LSE) of linear regression model from the data given in Table 1.
+
+```{r}
+## Defining the vectors 
+
+# The response vector
+y <- c(1.1, 2, 2.5, 3) 
+
+# The covariate vectors
+x1 <- c(11, 12, 10, 14) 
+x2 <- c(21, 24, 26, 30)
+```
+
+```{r}
+## Problem 1: Matrix Method (Closed-Form Solution)
+
+# Creating the X matrix using the given data and adding the intercept manually
+X <- cbind (1, x1, x2)
+
+# Closed form solution for the matrix representaion of the linear model 
+lse_estimates <- solve(t(X) %*% X) %*% (t(X) %*% y)
+
+# Displaying the results 
+lse_estimates
+```
+
+## Problem 2
+
+Use the lm() function to calculate the LSE
+
+```{r}
+## Using `lm()` Function
+
+# Using the lm() function
+res <- lm(y ~ x1 + x2)
+
+# Displaying the coefficients obtained
+res$coefficients
+```
+
+From the above two exercises, we can see that the closed form solution of the matrix representaion of the linear regression model yields the same value of parameters (slopes and intercept) obtained by that using the lm() function.

@@ -1,0 +1,118 @@
+---
+title: "Lab 6 Solution"
+author: Karan Pratap Lohiya
+format: pdf
+editor: visual
+---
+
+## Problem 1:
+
+#### To find the expectation of N(0,1) distributions using importance sampling from the family of N(0, $\sigma^2$) .
+
+The importance distribution is $N(0, \sigma^2)$ for some $\sigma > 0$ is optimal when its variance of corresponding importance estimator is minimum. It has the minimum variance when $\int_{-\infty}^{\infty} \frac{h(x)^2 f(x)^2}{g(x)} dx$ is minimum. On solving, we get that the above integral minimizes for $\sigma = \sqrt{2}$ and hence we have the importance distribution as $N(0,2)$ .
+
+```{r}
+# Density of standard normal
+standard_normal_pdf <- function(x) {
+  dnorm(x, mean = 0, sd = 1)
+}
+
+# Density of the importance distribution
+importance_density <- function(x) {
+  dnorm(x, mean = 0, sd = sqrt(2))
+}
+
+# Function to estimate the expectation using importance sampling
+importance_sampling_normal <- function(n_samples) {
+  # Generate samples from N(0, sqrt(2)) 
+  # ... the optimal importance sampling estimater amongst N(0,sigma^2)
+  samples <- rnorm(n_samples, mean = 0, sd = sqrt(2))
+  
+  # Calculate weights 
+  weights <- standard_normal_pdf(samples)/importance_density(samples)
+  
+  # Estimate the expectation
+  expectation <- mean(samples * weights)
+  
+  return(expectation)
+}
+```
+
+The above code snippet contains the function that estimates the mean of $N(0,1)$ with the help of the importance distribution $N(0,2)$ . It takes the number of samples to be generated as argument and returns the estimated mean.
+
+```{r}
+
+# Number of samples
+n_samples <- 1e4
+
+# Function Call
+estimated_expectation <- importance_sampling_normal(n_samples)
+
+# Displaying the results
+cat("Estimated expectation of N(0,1) distribution:", estimated_expectation)
+```
+
+From the above result we can see that the estimated mean is quite close to the real mean $0$.
+
+## Problem 2
+
+#### To estimate the variance of Gamma(2,4) distribution and variance of the corresponding importance sampling estimator.
+
+```{r}
+importance_sampling_gamma_variance <- function(n_samples) {
+  # Parameters for original Gamma(2, 4) distribution
+  k_orig <- 2
+  theta_orig <- 4
+  
+  # Parameters for importance Gamma(4, 4) distribution
+  k_imp <- 4
+  theta_imp <- 4
+  
+  # Generate samples from importance density (Gamma(4, 4))
+  samples <- rgamma(n_samples, shape = k_imp, rate = theta_imp)
+  
+  # Generate samples from importance density (Gamma(3,4))
+  samples_3 <- rgamma(n_samples, shape = k_imp - 1, rate = theta_imp)
+  
+  # Calculate weights: f(x)/g(x), 
+  # ...where f(x) is target density and g(x) is importance density
+  weights_4 <- dgamma(samples, shape = k_orig, rate = theta_orig) / 
+    dgamma(samples, shape = k_imp, rate = theta_imp)
+  
+  weights_3 <- dgamma(samples, shape = k_orig, rate = theta_orig) / 
+    dgamma(samples, shape = k_imp - 1, rate = theta_imp)
+  
+  # Estimate variance of Gamma(2,4)
+  variance_estimate <- mean(samples^2 * weights_4) - 
+    (mean(samples_3 * weights_3))^2
+  
+  return(variance_estimate)
+}
+```
+
+The above code snippet has a function that returns the estimated variance of $Gamma(2,4)$ distribution using the importance sampling technique to find the variance.
+
+```{r}
+# Number of samples
+n_samples <- 1e4
+
+# Function Call
+estimated_variance <- importance_sampling_gamma_variance(n_samples)
+estimated_variance
+```
+
+We can see that the expected value of variance is close to that of the theoretical value of the variance $\frac{1}{8}$, in this case.
+
+```{r}
+# Estimating the variance of the estimator
+k <- 1e3
+sample_variances <- numeric(k)
+for (i in 1:k){
+  sample_variances[i] <- importance_sampling_gamma_variance(n_samples)
+}
+
+# Variance of estimator
+var(sample_variances)
+```
+
+We can also see that the variance of the estimator is approximately zero.

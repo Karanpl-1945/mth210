@@ -1,0 +1,195 @@
+---
+title: "Lab 9 Solution"
+author: Karan Pratap Lohiya
+format: pdf
+editor: visual
+---
+
+## Problem 1
+
+Minimize \begin{equation*}
+        f(x, y) = -xy
+    \end{equation*} subject to \begin{equation*}
+        x + y^2 \leq 2 \text{ and } x,y \geq 0
+    \end{equation*}
+
+```{r}
+# Load the nloptr library
+library(nloptr)
+
+# Objective function
+func <- function(x) {
+  c(-x[1] * x[2])
+}
+```
+
+The above code defines the objective function that needs to be minimized.
+
+```{r}
+# Nonlinear inequality constraints:
+
+eval_g_ineq <- function(x) {
+  c(x[1] +  x[2]^2 - 2, -x[1], -x[2])
+}
+
+```
+
+The above code defines the inequality constraints subject to which the objective function is to be minimized.
+
+```{r}
+# Run optimization using NLOPT_GN_ISRES
+res <- nloptr(
+  x0 = c(0.5, 0.5),                      # Feasible start point
+  eval_f = func, 
+  eval_g_ineq = eval_g_ineq, 
+  lb = c(0, 0),                          # Lower bounds for x and y
+  ub = c(10, 10),                        # Large but finite upper bounds 
+  opts = list(
+    "algorithm" = "NLOPT_GN_ISRES",
+    "xtol_rel" = 1e-8, "maxeval" = 1e4
+  )
+)
+```
+
+The variable **res** stores the required output obtained after minimization of the given function.
+
+```{r}
+res
+```
+
+From the above, we can see that the minimum value of the function for relative tolerance $10^{-8}$ and maximum number of function evaluations as $10^4$ is quite close to the actual minimum value of the function i.e. $-1.088662$. The function attains its minimum value at $(\frac{4}{3}, \sqrt \frac{2}{3})$.
+
+## Problem 2
+
+Minimize \begin{equation*}
+        f(x, y) = 2x + y
+    \end{equation*} subject to \begin{equation*}
+        \sqrt {x^2 + y^2} \leq 2 \text{, } x \geq 0 \text{ and } y \geq 0.5x - 1
+    \end{equation*}
+
+```{r}
+# Objective function
+func <- function(x) {
+  2 * x[1] + x[2]
+}
+```
+
+The above code defines the objective function that needs to be minimized.
+
+```{r}
+# Inequality Constraints:
+
+eval_g_ineq <- function(x) {
+  c(sqrt(x[1]^2 + x[2]^2) - 2,
+    -x[1],
+    (0.5 * x[1] - 1) - x[2]          # y ≥ 0.5x -1
+  )
+}
+```
+
+The above code defines the inequality constraints subject to which the objective function is to be minimized.
+
+```{r}
+res <- nloptr(
+  x0 = c(1, 1),  # start point satisfying constraints approximately
+  eval_f = func,
+  eval_g_ineq = eval_g_ineq,
+  lb = c(0, -3),
+  ub = c(10, 10),
+  opts = list(
+    "algorithm" = "NLOPT_GN_ISRES",
+    "xtol_rel" = 1e-8, "maxeval" = 10000
+  )
+)
+```
+
+The variable **res** stores the required output obtained after minimization of the given function.
+
+```{r}
+res
+```
+
+From the above, we can see that the minimum value of the function for relative tolerance $10^{-8}$ and maximum number of function evaluations as $10^4$ is quite close to the actual minimum value of the function i.e. $-1$. The function attains its minimum value at $(0, -1)$.
+
+## Problem 3
+
+Minimize \begin{equation*}
+        f(x_1, \dots, x_4) = x_1^2 + x_2^2 + x_3^2 + x_4^2
+    \end{equation*} subject to \begin{equation*}
+        x_1 + x_2 + x_3 + x_4 = 1 \text{ and } x_4 \geq A.
+    \end{equation*}
+
+Consider three cases:
+
+\begin{enumerate}
+
+\item $A < 1/4$
+
+\item $A = 1/4$
+
+\item $A >1/4$
+
+\end{enumerate}
+
+```{r}
+# Objective Function
+func <- function(x){
+  sum(x^2)
+}
+```
+
+The above code defines the objective function that needs to be minimized.
+
+```{r}
+# Equality Constraints:
+
+eval_g_eq <- function(x){
+  sum(x) - 1
+}
+```
+
+The above code defines the equality constraints subject to which the objective function is to be minimized.
+
+```{r}
+solve_p3 <- function(A) {
+  eval_g_ineq <- function(x) {
+    A - x[4]
+  }
+  
+  res <- nloptr(
+    x0 = c(rep(A / 3, 3), 1 - A),  # reasonable start
+    eval_f = func,
+    eval_g_ineq = eval_g_ineq,
+    lb = rep(-2, 4),
+    ub = rep(10, 4),
+    eval_g_eq = eval_g_eq,
+    opts = list(
+      "algorithm" = "NLOPT_GN_ISRES",
+      "xtol_rel" = 1e-8, "maxeval" = 1e8
+    )
+  )
+  return(res)
+}
+```
+
+The above code minimizes the objective function subject to different values of the variable $A$.
+
+```{r}
+# Case (i) A < 1/4
+res_p3_case1 <- solve_p3(A = 0.2)
+print(res_p3_case1)
+```
+
+```{r}
+# Case (ii) A = 1/4
+res_p3_case2 <- solve_p3(A = 0.25)
+print(res_p3_case2)
+```
+
+```{r}
+# Case (iii) A > 1/4
+res_p3_case3 <- solve_p3(A = 0.3)
+print(res_p3_case3)
+```
+
+From the above results we can see that the objective function has a minimum value of $\frac{1}{4}$ irrespective of the value of the variable $A$, subject to the given constraints.

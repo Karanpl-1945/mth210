@@ -1,0 +1,146 @@
+---
+title: "Lab 11 Solution"
+author: Karan Pratap Lohiya
+format: pdf
+editor: visual
+---
+
+## Problem 1
+
+Estimate the parameters $(\mu, \sigma^2)$ of a normal distribution $\mathcal{N}(\mu, \sigma^2)$ using the **Newton-Raphson method**, and compare with their closed-form MLEs.
+
+### Solution:
+
+```{r}
+# Simulate data from N(mu, sigma^2), where mu is 5 and sigma = 2
+
+set.seed(123)
+x <- rnorm(100, mean = 5, sd = 2)
+
+# No. of data points
+n <- length(x)
+```
+
+```{r}
+# Log-likelihood derivatives
+
+loglik_grad <- function(mu, sigma2, x) {
+  dmu <- sum(x - mu) / sigma2
+  dsigma2 <- -n / (2 * sigma2) + sum((x - mu)^2) / (2 * sigma2^2)
+  return(c(dmu, dsigma2))
+}
+```
+
+The above function '**loglik_grad**' returns the gradient of the log likelihood function for a particular value of $\mu$ and $\sigma^2$ .
+
+```{r}
+# Setting up the Hessian matrix
+
+loglik_hessian <- function(mu, sigma2, x) {
+  
+  # Partial double derivative of log likelihood wrt mu
+  h11 <- -n / sigma2  
+  # Non diagonal elements of the Hessian matrix
+  h12 <- -2 * sum(x - mu) / sigma2^2  
+  h21 <- h12  # Symmetric
+  # Partial double derivative of log likelihood wrt sigma^2
+  h22 <- n / (2 * sigma2^2) - sum((x - mu)^2) / (sigma2^3)
+  
+  return(matrix(c(h11, h12, h21, h22), nrow = 2, byrow = TRUE))
+}
+```
+
+The above function '**loglik_hessian**' returns the Hessian matrix of the log likelihood function for a particular value of $\mu$ and $\sigma^2$ .
+
+```{r}
+# Newton-Raphson to estimate both mu and sigma^2
+newton_raphson_mle <- function(x, mu_init = 0, sigma2_init = 1,
+                               tol = 1e-8, max_iter = 1000) {
+  
+  # Suitable initial choices for mu and sigma^2 
+  mu <- mu_init
+  sigma2 <- sigma2_init
+  
+  for (i in 1:max_iter) {
+    grad <- loglik_grad(mu, sigma2, x)
+    hess <- loglik_hessian(mu, sigma2, x)
+    
+    # Hessian_inverse %*% Gradient(theta_old)
+    step <- solve(hess, grad)
+    
+    # Updating parameters as per
+    # ...theta_new = theta_old − Hessian_inverse %*% Gradient(theta_old)
+    mu_new <- mu - step[1]
+    sigma2_new <- sigma2 - step[2]
+    
+    # Stopping condition
+    if (sqrt((mu_new - mu)^2 + (sigma2_new - sigma2)^2) < tol) {
+      break
+    }
+    
+    mu <- mu_new
+    sigma2 <- sigma2_new
+  }
+  
+  return(c(mu = mu, sigma2 = sigma2))
+}
+```
+
+The above function uses the Newton-Raphson Method to find the MLEs of the parameters and returns the estimated parameter values with a tolerance of $10^{-6}$.
+
+```{r}
+# Closed-form MLEs
+mu_mle <- mean(x)
+sigma2_mle <- var(x)
+
+# Closed-form Estimates
+cat("  mu      =", mu_mle)
+cat("  sigma^2 =", sigma2_mle)
+```
+
+The above are the closed form MLEs of the parameters $\mu$ and $\sigma^2$.
+
+```{r}
+# Run Newton-Raphson
+mu_init <- 5
+sigma2_init <- 4
+mle_estimates <- newton_raphson_mle(x, mu_init, sigma2_init)
+
+# Newton-Raphson Estimates:
+cat("  mu      =", mle_estimates["mu"])
+cat("  sigma^2 =", mle_estimates["sigma2"])
+```
+
+The above are the MLEs of the parameters $\mu$ and $\sigma^2$, using the Newton-Raphson method.
+
+```{r}
+# Comparing the results obtained
+
+# Absolute Error 
+abs_error_mu <- abs(mle_estimates["mu"] - mu_mle)
+abs_error_sigma2 <- abs(mle_estimates["sigma2"] - sigma2_mle)
+
+# Relative Error
+rel_error_mu <- abs_error_mu / abs(mu_mle)
+rel_error_sigma2 <- abs_error_sigma2 / abs(sigma2_mle)
+
+# Squared Error
+squared_error_mu <- (mle_estimates["mu"] - mu_mle)^2
+squared_error_sigma2 <- (mle_estimates["sigma2"] - sigma2_mle)^2
+
+# Total report
+comparison_error <- data.frame(
+  row.names = c("Closed Form", "Newton-Raphson", "Absolute Error",
+                 "Relative Error", "Squared Error"),
+  
+  mu = c(mu_mle, mle_estimates["mu"], abs_error_mu, 
+         rel_error_mu, squared_error_mu),
+  
+  sigma2 = c(sigma2_mle, mle_estimates["sigma2"], abs_error_sigma2, 
+             rel_error_sigma2, squared_error_sigma2)
+)
+
+print(comparison_error)
+```
+
+From the above values of errors, we can see that the MLEs obtained by Newton-Raphson are quite close to that of the closed form MLEs of $\mu$ and $\sigma^2$.

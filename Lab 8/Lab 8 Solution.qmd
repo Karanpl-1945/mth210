@@ -1,0 +1,88 @@
+---
+title: "Lab 8 Solution"
+author: Karan Pratap Lohiya
+format: pdf
+editor: visual
+---
+
+### Problem 1
+
+Minimize \begin{equation*}
+        f(x, y) = x^2 + y^2 + 2xy
+    \end{equation*} subject to \begin{equation*}
+        x, y \in [0, 1]
+    \end{equation*}
+
+```{r}
+# Load the nloptr library
+library(nloptr)
+
+# Problem 1: Minimize f(x, y) = x^2 + y^2 + 2xy with x, y in [0, 1]
+obj_fun <- function(x) {
+  return(x[1]^2 + x[2]^2 + 2 * x[1] * x[2])
+}
+
+```
+
+The above code defines the multivariate function (objective function) that needs to be minimized.
+
+```{r}
+res <- nloptr(
+  x0 = c(0.5, 0.5), # initial values
+  eval_f = obj_fun,
+  lb = c(0, 0),
+  ub = c(1, 1),
+  opts = list("algorithm" = "NLOPT_GN_ISRES", 
+              "xtol_rel" = 1.0e-8, "maxeval" = 1000)
+)
+```
+
+The variable **res** stores the required output obtained after minimization of the given function.
+
+```{r}
+res
+```
+
+From the above, we can see that the minimum value of the function for relative tolerance $10^{-8}$ and maximum number of function evaluations as $1000$ is quite close to the actual minimum value of the function i.e. $0$. The function attains $0$ at the extreme i.e. $(0, 0)$.
+
+## Problem 2
+
+Minimize \begin{equation*}
+        f(x, y) = x^2 + y^2 - 2xy
+    \end{equation*} subject to \begin{equation*}
+        x, y \in [0, 1] \text{ and } x + y = 1
+    \end{equation*}
+
+```{r}
+# Problem 2: Minimize f(x, y) = x^2 + y^2 - 2xy 
+# ..with x, y in [0, 1] and x + y = 1
+obj_fun <- function(x) {
+  return(x[1]^2 + x[2]^2 - 2 * x[1] * x[2])
+}
+
+constraint_fun <- function(x) {
+  return(x[1] + x[2] - 1) # Equality constraint: x + y - 1 = 0
+}
+```
+
+The above code defines the multivariate function (objective function) that needs to be minimized.
+
+```{r}
+res <- nloptr(
+  x0 = c(0.5, 0.5),
+  eval_f = obj_fun,
+  lb = c(0, 0),
+  ub = c(1, 1),
+  eval_g_eq = constraint_fun,
+  opts = list("algorithm" = "NLOPT_GN_ISRES", 
+              "xtol_rel" = 1.0e-8, "maxeval" = 1000)
+)
+```
+
+The variable **res** stores the required output obtained after minimization of the given function.
+
+```{r}
+res
+```
+
+From the above, we can see that the minimum value of the function for relative tolerance $10^{-8}$ and maximum number of function evaluations as $1000$ is $0$, which is attained at infinitely many points satisfying $x = y$. But, after the imposition of the equality constraint, we arrive at an unique point where the value of the objective function is minimized which is $( \frac{1}{2}, \frac{1}{2})$ and the value is $0$.
